@@ -75,6 +75,10 @@
 %              If false, a file dialog is opened when the model is changed
 %              allowing the user to specify a different filename, or
 %              manually overwrite the current.
+%%% BB: added 3 lines below
+%     ignore_params - cell of strings, optional
+%              if a cell of strings, will ignore these EXACT parameter
+%              names when reading in samples.
 %
 % METHODS
 %     set    - Set multiple properties (as name/value pairs)
@@ -127,6 +131,7 @@ classdef StanModel < handle
       control
       
       inc_warmup
+      ignore_params %%%%%%%%%% BB: added
       sample_file
       diagnostic_file
       refresh
@@ -244,6 +249,7 @@ classdef StanModel < handle
          p.addParamValue('control',self.control);
          p.addParamValue('chains',self.chains);
          p.addParamValue('inc_warmup',self.inc_warmup);
+         p.addParamValue('ignore_params',self.ignore_params); %%%%%%%%%% BB: added
          p.addParamValue('data',[]);
          p.addParamValue('verbose',self.verbose);
          p.addParamValue('file_overwrite',self.file_overwrite);
@@ -279,6 +285,7 @@ classdef StanModel < handle
          self.control = p.Results.control;
          self.chains = p.Results.chains;
          self.inc_warmup = p.Results.inc_warmup;
+         self.ignore_params = p.Results.ignore_params; %%%%%%%%%% BB: added
          self.data = p.Results.data;
          self.refresh = p.Results.refresh;
       end
@@ -676,6 +683,8 @@ classdef StanModel < handle
                      set_adapt_window(self,control.(fn{i}));
                   case {'metric' 'hmc_metric'}
                      set_hmc_metric(self,control.(fn{i}));
+                  case {'max_depth' 'hmc_max_depth'} %%%%%%%%%% BB: added
+                     set_hmc_max_depth(self,control.(fn{i})); %%%%%%%%%% BB: added
                   case {'stepsize' 'hmc_stepsize'}
                      set_hmc_stepsize(self,control.(fn{i}));
                   case {'stepsize_jitter' 'hmc_stepsize_jitter'}
@@ -732,6 +741,25 @@ classdef StanModel < handle
       function bool = get.inc_warmup(self)
          bool = self.params.sample.save_warmup;
       end
+      
+      %%%%%%%%%% BB: begin addition
+      function set.ignore_params(self,cellofstr)
+         if ~isequal(cellofstr,{})
+             validateattributes(cellofstr,self.validators.sample.ignore_params{1},...
+                self.validators.sample.ignore_params{2})
+             if ~all(cellfun(@ischar,cellofstr))
+                 error('StanModel:ignore_params:InputFormat',...
+                         ['ignore_params must be a cell of strings, ' ...
+                          'but at least one entry is not char type.']);
+             end
+         end
+         self.params.sample.ignore_params = cellofstr;
+      end
+      
+      function cel = get.ignore_params(self)
+         cel = self.params.sample.ignore_params;
+      end
+      %%%%%%%%%% BB: end addition
       
       function set.data(self,d)
          if isstruct(d) || isa(d,'containers.Map') || isa(d,'RData')
@@ -928,7 +956,16 @@ classdef StanModel < handle
          p.block(0.05);
          if p.exitValue == 0
             str = regexp(p.stdout{1},'\ ','split');
-            ver = cellfun(@str2num,regexp(str{3},'\.','split'));
+%             ver = cellfun(@str2num,regexp(str{3},'\.','split'));
+            %%% BB: changed above to if statement below, 
+            %%%     to accomodate v2.25.0 & later
+            if isequal(str{1},'stanc')
+                ver = cellfun(@str2num,regexp(str{3},'\.','split'));
+            elseif isequal(str{1},'stanc3')
+                ver = cellfun(@str2num,regexp(str{2}(2:end),'\.','split'));
+            else
+                disp(str)
+            end
          else
             fprintf('%s\n',p.stdout{:});
          end
@@ -1091,6 +1128,12 @@ classdef StanModel < handle
          assert(any(strcmp(self.validators.sample.hmc.metric,val)),...
             'StanModel:set_hmc_metric:InputFormat','Invalid value for hmc_metric');
          self.params.sample.hmc.metric = val;
+      end
+      
+      function set_hmc_max_depth(self,val) %%%%%%%%%%
+         validateattributes(val,self.validators.sample.hmc.nuts.max_depth{1},...%%%%%%%%%%
+            self.validators.sample.hmc.nuts.max_depth{2}); %%%%%%%%%%
+         self.params.sample.hmc.nuts.max_depth = val; %%%%%%%%%%
       end
       
       function set_hmc_stepsize(self,val)

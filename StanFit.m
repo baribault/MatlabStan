@@ -183,7 +183,8 @@ classdef StanFit < handle
          elseif strcmp(self.model.method,'sample')
             for ind = 1:numel(self.output_file)
                [hdr,flatNames,flatSamples,pos] =  mstan.read_stan_csv(...
-                  self.output_file{ind},self.model.inc_warmup);
+                  self.output_file{ind},self.model.inc_warmup,...
+                  [],self.model.ignore_params); %%%%%%%%%% BB: added last 2 inputs
                
                self.pos_(ind) = pos;
                if isempty(flatSamples)
@@ -227,7 +228,8 @@ classdef StanFit < handle
                   self.output_file{ind},true);
             elseif strcmp(self.model.method,'sample')
                [hdr,flatNames,flatSamples,pos] =  mstan.read_stan_csv(...
-                  self.output_file{ind},self.model.inc_warmup);
+                  self.output_file{ind},self.model.inc_warmup,...
+                  [],self.model.ignore_params); %%%%%%%%%% BB: added last 2 inputs
             elseif strcmp(self.model.method,'variational')
                [hdr,flatNames,flatSamples] =  mstan.read_stan_csv(...
                   self.output_file{ind},true);

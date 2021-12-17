@@ -5,5 +5,5 @@
 %  o some way to manage fileseparators?
 function d = stan_home()
 
-d = '/Users/brian.lau/Documents/Code/cmdstan-2.15.0';
+d = '/opt/cmdstan-2.27.0';
 %d = 'C:\Users\brian\Downloads\cmdstan';

@@ -1,7 +1,7 @@
 This fork of MatlabStan:
 * programmatically fixes the error that everyone experiences now (related to getting stan version)
 * exposes the `max_depth` input such that the maximum treedepth tuning parameter for NUTS can now be changed from the default value of 10 (as god intended)
-* hacks in a new `ignore_params` input the `sample` method such that you can now tell MatlabStan to skip reading in the samples for these variables the CSV output (which is sometimes nice to save time)
+* hacks in a new `ignore_params` input for the `sample` method such that you can now tell MatlabStan to skip reading in the samples for these variables from the CSV output (which is sometimes nice to save time)
 
 
  ------
